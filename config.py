@@ -43,16 +43,20 @@ def validate_config(cfg: Dict[str, Any]) -> Dict[str, Any]:
 CONFIG = validate_config(load_config())
 
 # === Path getter ===
-def get_path(key: str, default: Optional[str] = None) -> Optional[Path]:
+def get_path(key: str, default: Optional[str] = None) -> Path:
     """Return a configured path as a ``Path`` object, validating existence."""
     value = CONFIG.get(key, default)
     if value is None:
-        logging.warning("Configuration key %s not found; using default %s", key, default)
-        return None
+        logging.warning(
+            "Configuration key %s not found and no default provided", key
+        )
+        return Path()
 
     path = Path(value)
-    if ("PATH" in key or "DIR" in key) and not path.exists():
-        raise FileNotFoundError(f"Configured path for {key} does not exist: {path}")
+    if ("PATH" in key.upper() or "DIR" in key.upper()) and not path.exists():
+        raise FileNotFoundError(
+            f"Configured path for {key} does not exist: {path}"
+        )
 
     return path
 

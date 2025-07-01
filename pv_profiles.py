@@ -93,54 +93,8 @@ PV_CONSTANTS = {
 }
 
 def get_pv_cell_profiles():
-    """
-    Returns a dictionary of PV technology profiles with
-    temperature coefficients and nominal efficiency values.
-
-    These profiles are used to estimate PV performance.
-    """
-    return {
-"Silicon": {
-        "spectral_response": {"Blue": 0.3, "Green": 0.7, "Red": 1.0, "IR": 1.0},
-        "temperature_coefficient": -0.0045
-    },
-    "Perovskite": {
-        "spectral_response": {"Blue": 1.0, "Green": 0.9, "Red": 0.4, "IR": 0.1},
-        "temperature_coefficient": -0.0025
-    },
-    "Tandem": {
-        "spectral_response": {"Blue": 1.0, "Green": 1.0, "Red": 1.0, "IR": 1.0},
-        "temperature_coefficient": -0.0035
-    },
-    "CdTe": {
-        "spectral_response": {"Blue": 0.8, "Green": 0.9, "Red": 0.7, "IR": 0.2},
-        "temperature_coefficient": -0.0028
-    },
-    "CIGS": {
-        "spectral_response": {"Blue": 0.6, "Green": 0.8, "Red": 1.0, "IR": 0.6},
-        "temperature_coefficient": -0.0029
-    },
-    "a-Si": {
-        "spectral_response": {"Blue": 0.9, "Green": 0.8, "Red": 0.6, "IR": 0.1},
-        "temperature_coefficient": -0.0016
-    },
-    "OPV": {
-        "spectral_response": {"Blue": 0.7, "Green": 1.0, "Red": 0.4, "IR": 0.1},
-        "temperature_coefficient": -0.0020
-    },
-    "DSSC": {
-        "spectral_response": {"Blue": 0.6, "Green": 0.9, "Red": 0.8, "IR": 0.2},
-        "temperature_coefficient": -0.0015
-    },
-    "J-Aggregate": {
-        "spectral_response": {"Blue": 0.8, "Green": 1.0, "Red": 0.9, "IR": 0.2},
-        "temperature_coefficient": -0.0022
-    },
-    "Photonics-Enhanced": {
-        "spectral_response": {"Blue": 1.1, "Green": 1.1, "Red": 1.1, "IR": 1.1},
-        "temperature_coefficient": -0.0030
-    }
-}
+    """Return the dictionary of PV technology profiles."""
+    return pv_profiles
 
 
     #--- Spectral & Technology Profiles ---
@@ -188,31 +142,3 @@ pv_profiles = {
 }
 
 
-# --- Physical Limits ---
-PHYSICAL_LIMITS = {
-    'GHI': (0, 1500),
-    'T_air': (-50, 60),
-    'RC_potential': (-100, 300),
-    'Red_band': (0, None),
-    'Total_band': (0, None),
-}
-
-# --- Atmospheric Constants ---
-ATMOSPHERIC_CONSTANTS = {
-    'sigma_sb': 5.670374419e-8,
-    'solar_constant': 1361,
-    'T_kelvin_offset': 273.15,
-}
-
-# --- Humidity & Sky Temp Model Parameters ---
-HUMIDITY_LIMITS = {
-    'RH': (0, 100),
-    'Cloud_Cover': (0, 1),
-    'T_dew': (-90, 60),
-}
-
-SKY_TEMP_MODEL = {
-    'eps_clear_base': 0.741,
-    'eps_clear_coeff': 0.0062,
-    'emissivity_bounds': (0.7, 1.0),
-}
