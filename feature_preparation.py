@@ -18,6 +18,16 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(me
 # --------------------------------------
 # 1. Physics-based PV potential function
 # --------------------------------------
+
+def load_netcdf_data(path: str, sample_fraction: float = 1.0) -> xr.Dataset:
+    """Load a NetCDF file and optionally sample a fraction of its time steps."""
+    with xr.open_dataset(path) as ds:
+        data = ds.load()
+    if 0 < sample_fraction < 1.0 and "time" in data:
+        n = max(1, int(len(data.time) * sample_fraction))
+        data = data.isel(time=slice(0, n))
+    return data
+
 def load_and_merge_datasets():
     logging.info("📥 Loading input datasets...")
 

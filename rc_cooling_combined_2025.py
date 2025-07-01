@@ -13,11 +13,20 @@ from sklearn.preprocessing import StandardScaler
 from humidity import compute_relative_humidity
 from utils.sky_temperature import calculate_sky_temperature_improved
 import argparse
-from visualize_rc_maps import run_visualization
+try:
+    from visualize_rc_maps import run_visualization
+except Exception:  # pragma: no cover - optional dependency
+    def run_visualization(*args, **kwargs):
+        raise ImportError("visualize_rc_maps unavailable")
 from enhanced_thermal_model import solve_surface_temperature_scalar, get_material_properties
 from constants import ATMOSPHERIC_CONSTANTS
 from pv_profiles import RC_MATERIALS
-from clustering import rc_only_clustering, plot_overlay_rc_pv_zones, generate_zone_descriptions
+try:
+    from clustering import rc_only_clustering, plot_overlay_rc_pv_zones, generate_zone_descriptions
+except Exception:  # pragma: no cover - optional dependency
+    rc_only_clustering = None
+    plot_overlay_rc_pv_zones = None
+    generate_zone_descriptions = None
 from config import get_path
 from scipy.interpolate import griddata
 from enhanced_thermal_model import solve_surface_temperature_scalar
@@ -41,8 +50,14 @@ material_config = RC_MATERIALS[SELECTED_MATERIAL]
 # Optional: Load emissivity spectrum if given
 EMISSIVITY_SPECTRUM = None  # default
 if os.path.exists("my_emissivity.csv"):
-    EMISSIVITY_SPECTRUM = pd.read_csv("my_emissivity.csv")
-    logging.info(f"Loaded emissivity spectrum with {len(EMISSIVITY_SPECTRUM)} points.")
+    try:
+        EMISSIVITY_SPECTRUM = pd.read_csv("my_emissivity.csv")
+        logging.info(
+            f"Loaded emissivity spectrum with {len(EMISSIVITY_SPECTRUM)} points."
+        )
+    except Exception:
+        logging.warning("Failed to read emissivity spectrum; using defaults")
+        EMISSIVITY_SPECTRUM = pd.DataFrame()
 else:
     logging.info("No emissivity spectrum file found. Using default material settings.")
 
@@ -254,26 +269,26 @@ def add_effective_albedo_optimized(
         return df
 
     try:
-        ds = xr.open_dataset(nc_path)
-        if "fal" not in ds:
-            logging.warning("'fal' not found in NetCDF; using default for all rows.")
-            df["effective_albedo"] = default_rho
-            return df
+        with xr.open_dataset(nc_path) as ds:
+            if "fal" not in ds:
+                logging.warning("'fal' not found in NetCDF; using default for all rows.")
+                df["effective_albedo"] = default_rho
+                return df
 
-        ds = ds.sortby("time")
+            ds = ds.sortby("time")
 
-        albedo_values = []
-        for idx, row in df.iterrows():
-            try:
-                ts = pd.Timestamp(row["timestamp"])
-                lat = float(row["lat"])
-                lon = float(row["lon"])
-                val = ds["fal"].interp(time=ts, latitude=lat, longitude=lon, method="nearest")
-                albedo_val = float(val.values)
-            except Exception as e:
-                logging.debug(f"Albedo failed at index {idx}: {e}")
-                albedo_val = default_rho
-            albedo_values.append(albedo_val)
+            albedo_values = []
+            for idx, row in df.iterrows():
+                try:
+                    ts = pd.Timestamp(row["time"])
+                    lat = float(row.get("lat") or row.get("LAT"))
+                    lon = float(row.get("lon") or row.get("LON"))
+                    val = ds["fal"].interp(time=ts, latitude=lat, longitude=lon, method="nearest")
+                    albedo_val = float(val.values)
+                except Exception as e:
+                    logging.debug(f"Albedo failed at index {idx}: {e}")
+                    albedo_val = default_rho
+                albedo_values.append(albedo_val)
 
         df["effective_albedo"] = albedo_values
         return df
@@ -341,6 +356,25 @@ def aggregate_qnet_rc_full(nc_path: str, output_dir: str, var_name: str = 'QNET'
         out_file = os.path.join(output_dir, f"{label}_rc_metrics.nc")
         ds_out.to_netcdf(out_file)
         print(f"✅ Saved {label} RC metrics to {out_file}")
+
+def aggregate_rc_metrics(csv_path: str, output_path: str) -> None:
+    """Aggregate kriged RC data by cluster and save metrics."""
+    df = pd.read_csv(csv_path)
+    if 'Cluster_ID' not in df.columns or 'RC_Kriged' not in df.columns:
+        raise ValueError('Required columns not found in input CSV')
+
+    grp = df.groupby('Cluster_ID')['RC_Kriged']
+    metrics = pd.DataFrame({
+        'Cluster_ID': grp.mean().index,
+        'RC_mean': grp.mean().values,
+        'RC_median': grp.median().values,
+        'RC_std': grp.std().values,
+        'RC_min': grp.min().values,
+        'RC_max': grp.max().values,
+        'RC_sum': grp.sum().values,
+        'RC_count': grp.count().values,
+    })
+    metrics.to_csv(output_path, index=False)
 
 KRIGING_SAMPLE_SIZE = 500  # max samples for training
 VARIOGRAM_MODEL = 'spherical'  # variogram model

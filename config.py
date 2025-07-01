@@ -68,6 +68,40 @@ def get_nc_dir() -> str:
         return env_dir
     return get_path("era5_path", "netcdf_files")
 
+def get_grib_dir() -> str:
+    """Return directory containing GRIB files."""
+    env_dir = os.getenv("GRIB_DATA_DIR")
+    if env_dir:
+        return env_dir
+    return get_path("era5_path", "grib_files")
+
+def get_temp_dir() -> str:
+    """Return a directory for temporary files."""
+    env_dir = os.getenv("TEMP_DIR")
+    if env_dir:
+        return env_dir
+    tmp_dir = Path(get_path("OUTPUT_DIR")) / "tmp"
+    os.makedirs(tmp_dir, exist_ok=True)
+    return str(tmp_dir)
+
+_COLUMN_MAP = {
+    "lon": "lon",
+    "lat": "lat",
+    "p_rc_basic": "RC_Kriged",
+    "p_rc_net": "RC_net",
+    "cluster_id": "Cluster_ID",
+    "season": "Season",
+    "year": "Year",
+}
+
+def get_column(key: str, optional: bool = False) -> str:
+    """Return standardized column name for a given key."""
+    if key in _COLUMN_MAP:
+        return _COLUMN_MAP[key]
+    if optional:
+        return key
+    raise KeyError(f"Unknown column key: {key}")
+
 # === App-wide resource config ===
 @dataclass
 class AppConfig:

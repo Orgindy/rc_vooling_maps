@@ -14,26 +14,24 @@ import pandas as pd
 logger = logging.getLogger(__name__)
 
 def load_pv_technology_profiles(csv_path: str) -> dict:
-    """
-    Load PV technology profiles from CSV file.
-
-    Returns:
-        dict: Mapping of tech name -> profile dict
-    """
+    """Load PV technology profiles from CSV file."""
     df = pd.read_csv(csv_path)
     profiles = {}
+    ref_col = 'Reference_Red_Fraction'
+    default_ref = PV_CONSTANTS.get('Reference_Red_Fraction', 0.42)
+
     for _, row in df.iterrows():
         tech = row['Technology']
         profiles[tech] = {
             'temperature_coefficient': row['Temperature_Coefficient'],
             'stc_efficiency': row['STC_Efficiency'],
-            'reference_red_fraction': row['Reference_Red_Fraction'],
-            # Add other profile parameters if needed
+            'reference_red_fraction': row.get(ref_col, default_ref),
         }
+
     return profiles
 
 # Load profiles once
-pv_tech_profiles = load_pv_technology_profiles('/mnt/data/pv_technology_profiles_enhanced.csv')
+pv_tech_profiles = load_pv_technology_profiles(get_path("pv_profile_path"))
 
 # Extract technology names and parameter arrays for use in calculations
 tech_names = list(pv_tech_profiles.keys())
@@ -204,7 +202,7 @@ def validate_temperature_coefficient(temp_coeff: float) -> float:
 
 def calculate_pv_potential(
     GHI: Union[float, np.ndarray],
-    T_cell: Union[float, np.ndarray],
+    T_air: Union[float, np.ndarray],
     RC_potential: Union[float, np.ndarray],
     Red_band: Union[float, np.ndarray],
     Total_band: Union[float, np.ndarray],
@@ -217,7 +215,7 @@ def calculate_pv_potential(
 
     Parameters:
         GHI: Global horizontal irradiance [W/m²]
-        T_cell: Module temperature [°C]
+        T_air: Module or ambient temperature [°C]
         RC_potential: Radiative cooling potential [W/m²]
         Red_band: Spectral irradiance in red band [W/m²]
         Total_band: Total spectral irradiance [W/m²]
@@ -231,12 +229,12 @@ def calculate_pv_potential(
 
     # Validate inputs
     temp_coeff = validate_temperature_coefficient(temp_coeff)
-    GHI, T_cell, RC_potential, Red_band, Total_band = validate_pv_inputs(
-        GHI, T_cell, RC_potential, Red_band, Total_band
+    GHI, T_air, RC_potential, Red_band, Total_band = validate_pv_inputs(
+        GHI, T_air, RC_potential, Red_band, Total_band
     )
 
     # Calculate temperature loss term (linear efficiency loss)
-    Temp_Loss = temp_coeff * (T_cell - 25)
+    Temp_Loss = temp_coeff * (T_air - 25)
 
     # Simplified radiative cooling gain term (empirical)
     RC_Gain = 0.01 * (RC_potential / 50)
