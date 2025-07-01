@@ -1,0 +1,24 @@
+era5_path: "C:/Users/gindi002/DATASET/Era5_GRIB_NEW_dataset_2023-2019_and_more_future"
+merged_data_path: "C:/Users/gindi002/DATASET/merged_dataset.csv"
+pv_database_path: "C:/Users/gindi002/DATASET/pv_database.csv"
+results_path: "C:/Users/gindi002/PROJECT_RESULTS/"
+smarts_inp_path: "C:/Users/gindi002/DATASET/smarts_inp_files/"
+smarts_out_path: "C:/Users/gindi002/DATASET/smarts_out_files/"
+shapefile_path: "C:/Users/gindi002/DATASET/koppen_shapefile.shp"
+DATA_FOLDER: "C:/Users/gindi002/DATASET"
+MODEL_PATH: "C:/Users/gindi002/PROJECT_RESULTS/models"
+DB_PATH: "C:/Users/gindi002/DATASET/database.sqlite"
+OUTPUT_DIR: "C:/Users/gindi002/PROJECT_RESULTS/outputs"
+train_features: "path/to/X_train.npy"
+test_features: "path/to/X_test.npy"
+train_target_pv: "path/to/y_train_pv.npy"
+test_target_pv: "path/to/y_test_pv.npy"
+train_target_cooling: "path/to/y_train_cooling.npy"
+test_target_cooling: "path/to/y_test_cooling.npy"
+train_target_net: "path/to/y_train_net.npy"
+test_target_net: "path/to/y_test_net.npy"
+use_kg_features: true
+clustered_data_paths:
+pv: results/clustered_predicted_pv.csv
+rc: results/clustered_predicted_rc.csv
+combined: results/clustered_predicted_pv_rc_combined.csv

@@ -1,0 +1,29 @@
+# Ignore your large data folder
+data/
+
+# Ignore specific files
+large_file.csv
+secrets.json
+
+# Ignore all CSVs
+*.csv
+!tests/data/
+!tests/data/*.csv
+
+# Ignore Jupyter checkpoints
+.ipynb_checkpoints/
+
+# Ignore Python cache directories
+__pycache__/
+tests/__pycache__/
+
+# Ignore virtual environments
+venv/
+
+# Ignore system files
+.DS_Store
+Thumbs.db
+
+# Local configuration
+config.yaml
+.pytest_cache/

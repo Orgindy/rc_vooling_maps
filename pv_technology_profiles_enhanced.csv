@@ -1,0 +1,11 @@
+Technology,Bandgap_eV,Spectral_Response_Blue,Spectral_Response_Green,Spectral_Response_Red,Spectral_Response_IR,Temperature_Coefficient,STC_Efficiency,Degradation_Rate,Measurement_Source,Certainty_Level,Year_Reported,SR_Curve_File
+Silicon,1.12,0.3,0.7,1.0,1.0,-0.0045,0.2,0.005,NREL,Commercial,2023,sr_silicon.csv
+Perovskite,1.55,1.0,0.9,0.4,0.1,-0.0025,0.18,0.02,Nature Energy,Lab,2023,sr_perovskite.csv
+Tandem,1.75,1.0,1.0,1.0,1.0,-0.0035,0.28,0.01,Nature Energy,Lab,2023,sr_tandem.csv
+CdTe,1.45,0.8,0.9,0.7,0.2,-0.0028,0.17,0.006,NREL,Commercial,2023,sr_cdte.csv
+CIGS,1.15,0.6,0.8,1.0,0.6,-0.0029,0.19,0.007,Fraunhofer,Lab,2023,sr_cigs.csv
+a-Si,1.7,0.9,0.8,0.6,0.1,-0.0016,0.1,0.015,IEA PVPS,Commercial,2021,sr_asi.csv
+OPV,1.8,0.7,1.0,0.4,0.1,-0.002,0.08,0.03,Nat. Energy,Experimental,2022,sr_opv.csv
+DSSC,1.4,0.6,0.9,0.8,0.2,-0.0015,0.11,0.02,Chem. Rev.,Lab,2019,sr_dssc.csv
+J-Aggregate,1.6,0.8,1.0,0.9,0.2,-0.0022,0.09,0.025,Adv. Mater.,Experimental,2022,sr_jagg.csv
+Photonics-Enhanced,1.6,1.1,1.1,1.1,1.1,-0.003,0.25,0.008,ACS Photonics,Lab,2023,sr_photonics.csv
