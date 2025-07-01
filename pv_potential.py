@@ -3,6 +3,7 @@ import logging
 import warnings
 from typing import Union, Tuple
 import xarray as xr
+from pathlib import Path
 from config import get_path
 from constants import PHYSICAL_LIMITS
 from pv_profiles import PV_CONSTANTS
@@ -13,27 +14,32 @@ import pandas as pd
 
 logger = logging.getLogger(__name__)
 
-def load_pv_technology_profiles(csv_path: str) -> dict:
-    """
-    Load PV technology profiles from CSV file.
+def load_pv_technology_profiles(csv_path: Union[str, Path]) -> dict:
+    """Load PV technology profiles from CSV file."""
 
-    Returns:
-        dict: Mapping of tech name -> profile dict
-    """
     df = pd.read_csv(csv_path)
     profiles = {}
     for _, row in df.iterrows():
-        tech = row['Technology']
+        tech = row.get("Technology")
+        if not tech:
+            continue
         profiles[tech] = {
-            'temperature_coefficient': row['Temperature_Coefficient'],
-            'stc_efficiency': row['STC_Efficiency'],
-            'reference_red_fraction': row['Reference_Red_Fraction'],
-            # Add other profile parameters if needed
+            "temperature_coefficient": row.get("Temperature_Coefficient", -0.004),
+            "stc_efficiency": row.get("STC_Efficiency", 0.2),
+            "reference_red_fraction": row.get(
+                "Reference_Red_Fraction",
+                PV_CONSTANTS.get("Reference_Red_Fraction", 0.42),
+            ),
         }
+
     return profiles
 
-# Load profiles once
-pv_tech_profiles = load_pv_technology_profiles('/mnt/data/pv_technology_profiles_enhanced.csv')
+# Load profiles once using configurable path
+PV_TECH_CSV = get_path(
+    "pv_tech_profiles_path",
+    Path(__file__).with_name("pv_technology_profiles_enhanced.csv")
+)
+pv_tech_profiles = load_pv_technology_profiles(str(PV_TECH_CSV))
 
 # Extract technology names and parameter arrays for use in calculations
 tech_names = list(pv_tech_profiles.keys())
@@ -204,20 +210,22 @@ def validate_temperature_coefficient(temp_coeff: float) -> float:
 
 def calculate_pv_potential(
     GHI: Union[float, np.ndarray],
-    T_cell: Union[float, np.ndarray],
-    RC_potential: Union[float, np.ndarray],
-    Red_band: Union[float, np.ndarray],
-    Total_band: Union[float, np.ndarray],
+    T_cell: Union[float, np.ndarray] = None,
+    RC_potential: Union[float, np.ndarray] = 0,
+    Red_band: Union[float, np.ndarray] = 0,
+    Total_band: Union[float, np.ndarray] = 1,
     temp_coeff: float = -0.004,
     PR_ref: float = 0.9,
     PR_bounds: tuple = (0.0, 1.0),
+    T_air: Union[float, np.ndarray, None] = None,
 ) -> np.ndarray:
     """
     Calculate PV potential given physics-based module temperature and spectral features.
 
     Parameters:
         GHI: Global horizontal irradiance [W/m²]
-        T_cell: Module temperature [°C]
+        T_cell: Module temperature [°C]. If ``None``, ``T_air`` is used for
+            backward compatibility.
         RC_potential: Radiative cooling potential [W/m²]
         Red_band: Spectral irradiance in red band [W/m²]
         Total_band: Total spectral irradiance [W/m²]
@@ -228,6 +236,12 @@ def calculate_pv_potential(
     Returns:
         PV potential array [W/m²]
     """
+
+    if T_cell is None:
+        if T_air is None:
+            raise TypeError("Either T_cell or T_air must be provided")
+        warnings.warn("T_air argument is deprecated; use T_cell", UserWarning)
+        T_cell = T_air
 
     # Validate inputs
     temp_coeff = validate_temperature_coefficient(temp_coeff)
