@@ -187,30 +187,27 @@ def match_technology_to_clusters(cluster_spectra_df, pv_profiles, temp_col='T_ai
     - match_df: DataFrame with scores and best technology per cluster
     """
     spectral_bands = ['Blue', 'Green', 'Red', 'IR']
-    results = []
+    band_cols = [f'{b}_band' for b in spectral_bands]
 
-    for _, row in cluster_spectra_df.iterrows():
-        cluster_id = row['Cluster_ID']
-        cluster_temp = row[temp_col]
-        tech_scores = {}
+    tech_names = list(pv_profiles)
+    coeffs = np.array([
+        [pv_profiles[t]['spectral_response'][b] for b in spectral_bands]
+        for t in tech_names
+    ])
+    temp_coeffs = np.array([pv_profiles[t]['temperature_coefficient'] for t in tech_names])
 
-        for tech, props in pv_profiles.items():
-            spectral_score = sum(
-                row[f"{band}_band"] * props['spectral_response'][band]
-                for band in spectral_bands
-            )
-            temp_penalty = props['temperature_coefficient'] * (cluster_temp - 25)
-            total_score = spectral_score + temp_penalty
-            tech_scores[tech] = total_score
+    cluster_vals = cluster_spectra_df[band_cols].values
+    scores = cluster_vals @ coeffs.T
+    temp_penalty = (cluster_spectra_df[temp_col].values[:, None] - 25) * temp_coeffs
+    total_scores = scores + temp_penalty
 
-        best_tech = max(tech_scores, key=tech_scores.get)
-        results.append({
-            'Cluster_ID': cluster_id,
-            'Best_Technology': best_tech,
-            **tech_scores
-        })
+    best_idx = total_scores.argmax(axis=1)
+    match_df = pd.DataFrame(total_scores, columns=tech_names)
+    match_df['Cluster_ID'] = cluster_spectra_df['Cluster_ID'].values
+    match_df['Best_Technology'] = [tech_names[i] for i in best_idx]
 
-    return pd.DataFrame(results)
+    cols = ['Cluster_ID', 'Best_Technology'] + tech_names
+    return match_df[cols]
 
 def compute_adjusted_yield_by_technology(df, pv_profiles):
     """
@@ -227,31 +224,26 @@ def compute_adjusted_yield_by_technology(df, pv_profiles):
     - DataFrame with [Location_ID, Technology, Adjusted_Yield]
     """
     spectral_bands = ['Blue', 'Green', 'Red', 'IR']
-    output = []
+    band_cols = [f'{b}_band' for b in spectral_bands]
 
-    for idx, row in df.iterrows():
-        location_id = row.get('location_id', idx)
-        T_air = row['T_air']
-        pred_pv = row['Predicted_PV_Potential']
-        total_band = row['Total_band']
+    tech_names = list(pv_profiles)
+    spectral_coeffs = np.array([
+        [pv_profiles[t]['spectral_response'][b] for b in spectral_bands]
+        for t in tech_names
+    ])
+    temp_coeffs = np.array([pv_profiles[t]['temperature_coefficient'] for t in tech_names])
 
-        for tech, props in pv_profiles.items():
-            spectral_match = 0
-            for band in spectral_bands:
-                band_col = f"{band}_band"
-                spectral_frac = row[band_col] / total_band if total_band > 0 else 0
-                spectral_match += spectral_frac * props['spectral_response'][band]
+    total_band = df['Total_band'].replace(0, np.nan)
+    frac_bands = df[band_cols].div(total_band, axis=0).fillna(0).values
+    spectral_match = frac_bands @ spectral_coeffs.T
+    temp_gain = (df['T_air'].values[:, None] - 25) * temp_coeffs
 
-            temp_gain = props['temperature_coefficient'] * (T_air - 25)
-            adjusted_yield = pred_pv * (1 + spectral_match + temp_gain)
+    adjusted = df['Predicted_PV_Potential'].values[:, None] * (1 + spectral_match + temp_gain)
 
-            output.append({
-                "Location_ID": location_id,
-                "Technology": tech,
-                "Adjusted_Yield": adjusted_yield
-            })
-
-    return pd.DataFrame(output)
+    result = pd.DataFrame(adjusted, columns=tech_names)
+    result['Location_ID'] = df['location_id'] if 'location_id' in df.columns else df.index
+    result = result.melt(id_vars='Location_ID', var_name='Technology', value_name='Adjusted_Yield')
+    return result
 
 def compute_cluster_summary(
     df,

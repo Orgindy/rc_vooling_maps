@@ -64,17 +64,15 @@ def load_pv_profiles_from_csv(file_path=None):
     if not required_cols.issubset(df.columns):
         raise ValueError(f"CSV file missing required columns: {required_cols - set(df.columns)}")
 
-    profiles = {}
-    for _, row in df.iterrows():
-        profiles[row['Technology']] = {
-            "spectral_response": {
-                "Blue": row['Blue'],
-                "Green": row['Green'],
-                "Red": row['Red'],
-                "IR": row['IR']
-            },
-            "temperature_coefficient": row['TempCoeff']
+    spectral_cols = ['Blue', 'Green', 'Red', 'IR']
+    df = df.set_index('Technology')
+    profiles = {
+        tech: {
+            'spectral_response': row[spectral_cols].to_dict(),
+            'temperature_coefficient': row['TempCoeff']
         }
+        for tech, row in df.to_dict(orient='index').items()
+    }
     return profiles
 
 def get_pv_cell_profiles():
@@ -338,24 +336,27 @@ def assign_clusters_to_dataframe(df, labels, column_name='Cluster_ID'):
 
 def match_technology_to_clusters(cluster_spectra_df, pv_profiles, temp_col='T_air'):
     spectral_bands = ['Blue', 'Green', 'Red', 'IR']
-    results = []
-    for _, row in cluster_spectra_df.iterrows():
-        cluster_id = row['Cluster_ID']
-        cluster_temp = row[temp_col]
-        tech_scores = {}
-        for tech, profile in pv_profiles.items():
-            score = sum(row[band + '_band'] * profile['spectral_response'][band] for band in spectral_bands)
-            temp_coeff = profile['temperature_coefficient']
-            temp_penalty = temp_coeff * (cluster_temp - 25)
-            adjusted_score = score + temp_penalty
-            tech_scores[tech] = adjusted_score
-        best_match = max(tech_scores, key=tech_scores.get)
-        results.append({
-            'Cluster_ID': cluster_id,
-            'Best_Technology': best_match,
-            **tech_scores
-        })
-    return pd.DataFrame(results)
+    band_cols = [f'{b}_band' for b in spectral_bands]
+
+    tech_names = list(pv_profiles)
+    coeffs = np.array([
+        [pv_profiles[t]['spectral_response'][b] for b in spectral_bands]
+        for t in tech_names
+    ])
+    temp_coeffs = np.array([pv_profiles[t]['temperature_coefficient'] for t in tech_names])
+
+    cluster_vals = cluster_spectra_df[band_cols].values
+    scores = cluster_vals @ coeffs.T
+    temp_penalty = (cluster_spectra_df[temp_col].values[:, None] - 25) * temp_coeffs
+    total_scores = scores + temp_penalty
+
+    best_idx = total_scores.argmax(axis=1)
+    match_df = pd.DataFrame(total_scores, columns=tech_names)
+    match_df['Cluster_ID'] = cluster_spectra_df['Cluster_ID'].values
+    match_df['Best_Technology'] = [tech_names[i] for i in best_idx]
+
+    cols = ['Cluster_ID', 'Best_Technology'] + tech_names
+    return match_df[cols]
 
 
 def plot_clusters_map(df, lat_col='latitude', lon_col='longitude', cluster_col='Cluster_ID', title='PV Performance Clusters'):

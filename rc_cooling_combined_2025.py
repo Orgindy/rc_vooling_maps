@@ -126,16 +126,13 @@ def get_effective_albedo(nc_path: str, timestamp: pd.Timestamp, lat: float, lon:
 ##############################################################################
 
 def calculate_qnet_full(df):
-    results = []
-
-    for _, row in df.iterrows():
+    def _calc(row):
         GHI = row['msnwswrf']
         T_air = row['t2m'] - 273.15
         IR_down = row['msdwlwrf']
         wind = row['wind_speed']
         zenith = row['solar_zenith']
 
-        # Always get α from material profile or switch
         props = get_material_properties(
             T_surface=T_air,
             GHI=GHI,
@@ -146,7 +143,6 @@ def calculate_qnet_full(df):
         )
         alpha = props['alpha']
 
-        # 🔑 Optional: use uploaded spectrum
         if EMISSIVITY_SPECTRUM is not None:
             epsilon = compute_eps_eff_from_spectrum(T_air)
             logging.debug(f"Using spectral ε_eff = {epsilon:.4f}")
@@ -160,7 +156,7 @@ def calculate_qnet_full(df):
 
         T_sky = calculate_sky_temperature_improved(T_air, row['RH'], row['tcc'])
         Q_rad_out = epsilon * SIGMA * (T_surf + 273.15) ** 4
-        Q_rad_in  = epsilon * SIGMA * (T_sky + 273.15) ** 4
+        Q_rad_in = epsilon * SIGMA * (T_sky + 273.15) ** 4
         Q_solar_abs = (1 - row['effective_albedo']) * GHI
 
         h_c = 5 + 4 * wind
@@ -171,10 +167,9 @@ def calculate_qnet_full(df):
         T_sub = T_air
         Q_cond = k * (T_surf - T_sub) / d
 
-        QNET = Q_rad_out - Q_rad_in - Q_solar_abs - Q_conv - Q_cond
-        results.append(QNET)
+        return Q_rad_out - Q_rad_in - Q_solar_abs - Q_conv - Q_cond
 
-    return np.array(results)
+    return df.apply(_calc, axis=1).to_numpy()
 
 def calculate_qnet_vectorized(df: pd.DataFrame,
                               sigma: float = STEFAN_BOLTZMANN,
@@ -262,20 +257,20 @@ def add_effective_albedo_optimized(
 
         ds = ds.sortby("time")
 
-        albedo_values = []
-        for idx, row in df.iterrows():
-            try:
-                ts = pd.Timestamp(row["timestamp"])
-                lat = float(row["lat"])
-                lon = float(row["lon"])
-                val = ds["fal"].interp(time=ts, latitude=lat, longitude=lon, method="nearest")
-                albedo_val = float(val.values)
-            except Exception as e:
-                logging.debug(f"Albedo failed at index {idx}: {e}")
-                albedo_val = default_rho
-            albedo_values.append(albedo_val)
-
-        df["effective_albedo"] = albedo_values
+        try:
+            times = pd.to_datetime(df["timestamp"])
+            lats = xr.DataArray(df["lat"].astype(float).values, dims="points")
+            lons = xr.DataArray(df["lon"].astype(float).values, dims="points")
+            vals = ds["fal"].interp(
+                time=("points", times),
+                latitude=("points", lats),
+                longitude=("points", lons),
+                method="nearest",
+            )
+            df["effective_albedo"] = vals.values.astype(float)
+        except Exception as e:
+            logging.error(f"Vectorized albedo interpolation failed: {e}")
+            df["effective_albedo"] = default_rho
         return df
 
     except Exception as e:
