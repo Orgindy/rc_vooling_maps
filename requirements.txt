@@ -2,7 +2,7 @@ numpy
 pandas
 psutil
 xarray
-pyyaml
+yaml
 scikit-learn
 pykrige
 pvlib
@@ -11,3 +11,5 @@ matplotlib
 seaborn
 contextily
 dask
+
+markdown
