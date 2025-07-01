@@ -4,7 +4,8 @@ import warnings
 from typing import Union, Tuple
 import xarray as xr
 from config import get_path
-from constants import PV_CONSTANTS, PHYSICAL_LIMITS
+from constants import PHYSICAL_LIMITS
+from pv_profiles import PV_CONSTANTS
 from pykrige.ok import OrdinaryKriging
 import pvlib
 from enhanced_thermal_model import compute_temperature_series
