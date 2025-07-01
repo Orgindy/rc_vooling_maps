@@ -21,10 +21,13 @@ from utils.feature_utils import save_config
 
 from clustering import (
     prepare_clustered_dataset,
-    main_matching_pipeline,
-    plot_prediction_uncertainty_with_contours,
     compute_cluster_summary,
     compute_pv_potential_by_cluster_year,
+)
+
+from pv_prediction import (
+    main_matching_pipeline,
+    plot_prediction_uncertainty_with_contours,
     prepare_features_for_clustering,
 )
 
