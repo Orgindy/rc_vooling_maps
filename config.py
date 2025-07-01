@@ -43,16 +43,18 @@ def validate_config(cfg: Dict[str, Any]) -> Dict[str, Any]:
 CONFIG = validate_config(load_config())
 
 # === Path getter ===
-def get_path(key: str, default: Optional[str] = None) -> Optional[str]:
-    """Return a configured path by key, validating its existence."""
+def get_path(key: str, default: Optional[str] = None) -> Optional[Path]:
+    """Return a configured path as a ``Path`` object, validating existence."""
     value = CONFIG.get(key, default)
     if value is None:
         logging.warning("Configuration key %s not found; using default %s", key, default)
-        return value
-    if ("PATH" in key or "DIR" in key) and isinstance(value, str):
-        if not os.path.exists(value):
-            raise FileNotFoundError(f"Configured path for {key} does not exist: {value}")
-    return value
+        return None
+
+    path = Path(value)
+    if ("PATH" in key or "DIR" in key) and not path.exists():
+        raise FileNotFoundError(f"Configured path for {key} does not exist: {path}")
+
+    return path
 
 # === NetCDF directory helper ===
 def get_nc_dir() -> str:

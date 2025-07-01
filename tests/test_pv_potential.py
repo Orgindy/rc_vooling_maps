@@ -2,7 +2,8 @@ import numpy as np
 import pytest
 
 from pv_potential import calculate_pv_potential
-from constants import PV_CONSTANTS, PHYSICAL_LIMITS
+from constants import PHYSICAL_LIMITS
+from pv_profiles import PV_CONSTANTS
 
 
 def test_temperature_coefficient_validation():
