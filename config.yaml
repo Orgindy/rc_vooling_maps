@@ -5,6 +5,7 @@ results_path: results
 smarts_inp_path: data/smarts_inp_files
 smarts_out_path: data/smarts_out_files
 shapefile_path: data/koppen_shapefile.shp
+pv_tech_profiles_path: pv_technology_profiles_enhanced.csv
 DATA_FOLDER: data
 MODEL_PATH: models
 DB_PATH: data/database.sqlite
@@ -19,8 +20,8 @@ train_target_net: "path/to/y_train_net.npy"
 test_target_net: "path/to/y_test_net.npy"
 use_kg_features: true
 clustered_data_paths:
-pv: results/clustered_predicted_pv.csv
-rc: results/clustered_predicted_rc.csv
+  pv: results/clustered_predicted_pv.csv
+  rc: results/clustered_predicted_rc.csv
   combined: results/clustered_predicted_pv_rc_combined.csv
 
 columns:
