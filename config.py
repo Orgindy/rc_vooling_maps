@@ -68,6 +68,35 @@ def get_nc_dir() -> str:
         return env_dir
     return get_path("era5_path", "netcdf_files")
 
+# === Column name helper ===
+def get_column(key: str, optional: bool = False) -> str:
+    """Return a column name mapped from ``config.yaml``.
+
+    Parameters
+    ----------
+    key : str
+        The logical column key to look up under ``columns`` in ``config.yaml``.
+    optional : bool, default False
+        If ``True`` return an empty string when the key is missing instead of
+        raising ``KeyError``.
+
+    Returns
+    -------
+    str
+        The configured column name or an empty string if optional and not
+        configured.
+    """
+
+    columns = CONFIG.get("columns", {})
+    column = columns.get(key)
+    if column is None:
+        msg = f"Column mapping for '{key}' not found in config"
+        if optional:
+            logging.warning(msg + " (optional)")
+            return ""
+        raise KeyError(msg)
+    return column
+
 # === App-wide resource config ===
 @dataclass
 class AppConfig:

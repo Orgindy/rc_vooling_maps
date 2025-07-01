@@ -21,4 +21,21 @@ use_kg_features: true
 clustered_data_paths:
 pv: results/clustered_predicted_pv.csv
 rc: results/clustered_predicted_rc.csv
-combined: results/clustered_predicted_pv_rc_combined.csv
+  combined: results/clustered_predicted_pv_rc_combined.csv
+
+columns:
+  lat: latitude
+  lon: longitude
+  cluster_id: Cluster_ID
+  rc_cluster: RC_Cluster
+  pv_tech: Best_Technology
+  rc_potential: RC_potential
+  p_rc_basic: P_rc_basic
+  p_rc_net: P_rc_net
+  t_air: T_air
+  ghi: GHI
+  rh: RH
+  cloud_cover: TCC
+  red_band: Red_band
+  season: season
+  year: year
