@@ -10,6 +10,7 @@ from pv_profiles import RC_MATERIALS
 import xarray as xr
 import numpy as np
 from pv_profiles import PV_CONSTANTS
+from constants import ATMOSPHERIC_CONSTANTS
 
 # Optional: config connection
 try:
@@ -18,7 +19,7 @@ except ImportError:
     get_config = None  # fallback if you want to run standalone
 
 # Stefan–Boltzmann constant
-SIGMA = 5.670374419e-8  # W/m²·K⁴
+SIGMA = ATMOSPHERIC_CONSTANTS['sigma_sb']  # W/m²·K⁴
 SELECTED_MATERIAL = "Smart_Coating"
 material_config = RC_MATERIALS[SELECTED_MATERIAL]
 

@@ -29,7 +29,7 @@ logging.basicConfig(level=logging.INFO,
 ##############################################################################
 #                               CONFIGURATION
 ##############################################################################
-STEFAN_BOLTZMANN = 5.67e-8      # W/m²/K^4
+STEFAN_BOLTZMANN = ATMOSPHERIC_CONSTANTS['sigma_sb']  # W/m²/K^4
 DEFAULT_RHO       = 0.2         # Default solar reflectivity
 DEFAULT_EPS_COAT  = 0.95        # Assumed IR emissivity of the coating
 CHUNK_SIZE        = 10000       # Number of rows per CSV chunk
@@ -476,7 +476,7 @@ def estimate_sky_temperature_hybrid(df):
     e_sky = 0.6 + 0.2 * df['tcc'] + 0.002 * RH
     e_sky = np.clip(e_sky, 0.7, 1.0)
 
-    sigma = 5.670374419e-8  # Stefan–Boltzmann constant
+    sigma = ATMOSPHERIC_CONSTANTS['sigma_sb']  # Stefan–Boltzmann constant
     IR_down = df['msdwlwrf']  # W/m²
 
     T_sky_K = (IR_down / (e_sky * sigma)) ** 0.25
