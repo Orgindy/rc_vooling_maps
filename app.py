@@ -710,7 +710,7 @@ with col1:
                         top_zones = similar_zones.head(num_neighbors)
                         
                         # Display recommendations
-                        for idx, (_, zone) in enumerate(top_zones.iterrows()):
+                        for idx, zone in enumerate(top_zones.to_dict("records")):
                             col_a, col_b, col_c, col_d = st.columns(4)
                             
                             with col_a:
