@@ -6,6 +6,9 @@ import matplotlib.pyplot as plt
 import joblib
 import contextily as ctx
 from config import get_path
+from constants import ATMOSPHERIC_CONSTANTS
+
+SIGMA_SB = ATMOSPHERIC_CONSTANTS["sigma_sb"]
 from sklearn.metrics import silhouette_score
 import os
 from config import get_column, get_path
@@ -157,7 +160,7 @@ def calculate_rc_power_improved(df, albedo=0.3, emissivity=0.95):
     T_sky = calculate_sky_temperature_improved(df[t_air_col], RH, TCC)
 
     # Radiative cooling model
-    σ = 5.67e-8  # W/m²·K⁴
+    σ = SIGMA_SB  # Stefan–Boltzmann constant
     T_air_K = df[t_air_col] + 273.15
     T_sky_K = T_sky + 273.15
 

@@ -11,6 +11,7 @@ from utils.sky_temperature import calculate_sky_temperature_improved
 from utils.feature_utils import compute_band_ratios, filter_valid_columns
 from pv_profiles import get_pv_cell_profiles
 from pv_potential import calculate_pv_potential
+from constants import ATMOSPHERIC_CONSTANTS
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 
@@ -179,7 +180,7 @@ def validate_parameters(input_file, output_file, drop_invalid=True):
     
     # Define valid ranges (based on physical limits)
     valid_ranges = {
-        "GHI": (0, 1361),        # Max solar constant at TOA
+        "GHI": (0, ATMOSPHERIC_CONSTANTS['solar_constant']),  # Max solar constant at TOA
         "T_air": (-90, 60),      # Realistic surface temperature range (°C)
         "RC_potential": (0, 300),  # Reasonable cooling range (W/m²)
         "Wind_Speed": (0, 150),  # Typical wind speeds (m/s)

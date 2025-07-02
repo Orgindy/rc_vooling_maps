@@ -29,12 +29,11 @@ logging.basicConfig(level=logging.INFO,
 ##############################################################################
 #                               CONFIGURATION
 ##############################################################################
-STEFAN_BOLTZMANN = 5.67e-8      # W/m²/K^4
 DEFAULT_RHO       = 0.2         # Default solar reflectivity
 DEFAULT_EPS_COAT  = 0.95        # Assumed IR emissivity of the coating
 CHUNK_SIZE        = 10000       # Number of rows per CSV chunk
 KRIGING_SAMPLE_SIZE = 500       # Maximum number of points for training kriging
-SIGMA = ATMOSPHERIC_CONSTANTS['sigma_sb']
+SIGMA_SB = ATMOSPHERIC_CONSTANTS['sigma_sb']
 SELECTED_MATERIAL = "Smart_Coating"  # or "Default_Coating"
 material_config = RC_MATERIALS[SELECTED_MATERIAL]
 
@@ -155,8 +154,8 @@ def calculate_qnet_full(df):
         )
 
         T_sky = calculate_sky_temperature_improved(T_air, row['RH'], row['tcc'])
-        Q_rad_out = epsilon * SIGMA * (T_surf + 273.15) ** 4
-        Q_rad_in = epsilon * SIGMA * (T_sky + 273.15) ** 4
+        Q_rad_out = epsilon * SIGMA_SB * (T_surf + 273.15) ** 4
+        Q_rad_in = epsilon * SIGMA_SB * (T_sky + 273.15) ** 4
         Q_solar_abs = (1 - row['effective_albedo']) * GHI
 
         h_c = 5 + 4 * wind
@@ -172,7 +171,7 @@ def calculate_qnet_full(df):
     return df.apply(_calc, axis=1).to_numpy()
 
 def calculate_qnet_vectorized(df: pd.DataFrame,
-                              sigma: float = STEFAN_BOLTZMANN,
+                              sigma: float = SIGMA_SB,
                               eps_coat: float = DEFAULT_EPS_COAT) -> pd.Series:
     """
     Vectorized QNET calculation using real ERA5 downward longwave flux (msdwlwrf)
@@ -476,7 +475,7 @@ def estimate_sky_temperature_hybrid(df):
     e_sky = 0.6 + 0.2 * df['tcc'] + 0.002 * RH
     e_sky = np.clip(e_sky, 0.7, 1.0)
 
-    sigma = 5.670374419e-8  # Stefan–Boltzmann constant
+    sigma = SIGMA_SB  # Stefan–Boltzmann constant
     IR_down = df['msdwlwrf']  # W/m²
 
     T_sky_K = (IR_down / (e_sky * sigma)) ** 0.25
