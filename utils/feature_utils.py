@@ -3,6 +3,8 @@ import logging
 from datetime import datetime
 from typing import List, Tuple
 
+import xarray as xr
+
 import numpy as np
 import pandas as pd
 import yaml
@@ -91,3 +93,19 @@ def save_config(config: dict, output_dir: str) -> str:
         yaml.dump(config, f)
     logging.info(f"Saved configuration to {path}")
     return path
+
+
+def convert_xarray_to_dataframe(ds: xr.Dataset) -> pd.DataFrame:
+    """Flatten an ``xarray.Dataset`` to a ``pandas.DataFrame``.
+
+    Parameters
+    ----------
+    ds : xr.Dataset
+        Input dataset.
+
+    Returns
+    -------
+    pd.DataFrame
+        Dataset converted to a DataFrame with reset index.
+    """
+    return ds.to_dataframe().reset_index()

@@ -9,6 +9,7 @@ from .feature_utils import (
     spectral_summary,
     filter_valid_columns,
     compute_cluster_spectra,
+    convert_xarray_to_dataframe,
     save_config,
 )
 
@@ -23,5 +24,6 @@ __all__ = [
     "spectral_summary",
     "filter_valid_columns",
     "compute_cluster_spectra",
+    "convert_xarray_to_dataframe",
     "save_config",
 ]
