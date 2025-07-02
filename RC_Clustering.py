@@ -5,7 +5,6 @@ import geopandas as gpd
 import matplotlib.pyplot as plt
 import joblib
 import contextily as ctx
-from config import get_path
 from constants import ATMOSPHERIC_CONSTANTS
 
 SIGMA_SB = ATMOSPHERIC_CONSTANTS["sigma_sb"]
