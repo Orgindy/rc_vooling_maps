@@ -11,13 +11,14 @@ Improved version:
 
 import numpy as np
 import pandas as pd
+import logging
 
 try:
     from pvlib.solarposition import get_solarposition
     PVLIB_AVAILABLE = True
 except ImportError:
     PVLIB_AVAILABLE = False
-    print("⚠️ pvlib not available — using fallback zenith logic.")
+    logging.warning("⚠️ pvlib not available — using fallback zenith logic.")
 
 
 def get_material_state(
