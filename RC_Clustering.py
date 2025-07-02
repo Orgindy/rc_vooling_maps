@@ -7,6 +7,7 @@ import joblib
 import contextily as ctx
 from config import get_path
 from constants import ATMOSPHERIC_CONSTANTS
+import numpy as np
 
 SIGMA_SB = ATMOSPHERIC_CONSTANTS["sigma_sb"]
 from sklearn.metrics import silhouette_score
@@ -180,10 +181,20 @@ def sweep_rc_with_reflectivity(df, albedo_values=None):
     if albedo_values is None:
         albedo_values = [0.3, 0.6, 1.0]
 
-    results = []
-    for alb in albedo_values:
-        df_alb = calculate_rc_power_improved(df, albedo=alb)
-        df_alb['Albedo'] = alb
-        results.append(df_alb)
+    albedos = np.asarray(albedo_values, dtype=float)
 
-    return pd.concat(results, ignore_index=True)
+    base = calculate_rc_power_improved(df, albedo=0.0)
+    q_rad = base['Q_rad'].to_numpy()
+    ghi_col = get_column("ghi")
+    ghi = df[ghi_col].to_numpy()
+
+    q_solar = (1 - albedos)[:, None] * ghi
+    p_rc_net = q_rad - q_solar
+
+    repeated_df = pd.concat([df] * len(albedos), ignore_index=True)
+    repeated_df['Albedo'] = np.repeat(albedos, len(df))
+    repeated_df['Q_rad'] = np.tile(q_rad, len(albedos))
+    repeated_df['Q_solar'] = q_solar.ravel()
+    repeated_df['P_rc_net'] = p_rc_net.ravel()
+
+    return repeated_df
