@@ -25,46 +25,54 @@ def get_material_state(
     GHI,
     profile,
     smooth=False,
-    smoothing_band=2.0
+    smoothing_band=2.0,
 ):
-    """
-    Decide material state based on thresholds.
+    """Vectorized decision of material state.
 
     Parameters
     ----------
-    T_surface : float
-        Surface temp [K] or °C.
-    GHI : float
+    T_surface : float or np.ndarray
+        Surface temperature(s) [K] or °C.
+    GHI : float or np.ndarray
         Global horizontal irradiance [W/m²].
     profile : dict
-        Switching conditions: state_map with T/GHI thresholds.
+        Switching conditions containing ``state_map`` and optional ``default``.
     smooth : bool, optional
-        If True, blend near thresholds.
+        Currently unused, kept for API compatibility.
     smoothing_band : float, optional
-        +/- degrees K or W/m² range for blending.
+        Unused range for potential blending.
 
     Returns
     -------
-    str
-        Chosen state label.
+    np.ndarray or str
+        Array of state labels matching the shape of ``T_surface``/``GHI``.
     """
-    T_celsius = T_surface - 273.15 if T_surface > 200 else T_surface
+
+    T_surface_arr = np.asarray(T_surface)
+    GHI_arr = np.asarray(GHI)
+    T_celsius = np.where(T_surface_arr > 200, T_surface_arr - 273.15, T_surface_arr)
+
+    states = np.full(T_celsius.shape, profile.get("default", "static"), dtype=object)
+    assigned = np.zeros(T_celsius.shape, dtype=bool)
 
     for state, cond in profile["state_map"].items():
-        match = True
+        mask = np.ones(T_celsius.shape, dtype=bool)
         if "T_max" in cond:
-            match &= T_celsius <= cond["T_max"]
+            mask &= T_celsius <= cond["T_max"]
         if "T_min" in cond:
-            match &= T_celsius >= cond["T_min"]
+            mask &= T_celsius >= cond["T_min"]
         if "GHI_max" in cond:
-            match &= GHI <= cond["GHI_max"]
+            mask &= GHI_arr <= cond["GHI_max"]
         if "GHI_min" in cond:
-            match &= GHI >= cond["GHI_min"]
+            mask &= GHI_arr >= cond["GHI_min"]
 
-        if match:
-            return state
+        mask &= ~assigned
+        states[mask] = state
+        assigned |= mask
 
-    return profile.get("default", "static")
+    if states.size == 1:
+        return states.item()
+    return states
 
 
 def get_emissivity(state, emissivity_profile):
@@ -148,27 +156,39 @@ def vectorized_get_material_properties(
     -------
     pd.DataFrame with state, emissivity, alpha arrays.
     """
-    states = []
-    epsilons = []
-    alphas = []
+    T_arr = np.asarray(T_surface_array)
+    GHI_arr = np.asarray(GHI_array)
+    Z_arr = np.asarray(solar_zenith_array)
 
-    for T, GHI, Z in zip(T_surface_array, GHI_array, solar_zenith_array):
-        props = get_material_properties(
-            T_surface=T,
-            GHI=GHI,
-            solar_zenith=Z,
-            profile=profile,
-            emissivity_profile=emissivity_profile,
-            alpha_profile=alpha_profile
+    prof = profile.copy()
+    zenith_thr = prof.pop("zenith_threshold", None)
+
+    states = np.full(T_arr.shape, prof.get("default", "static"), dtype=object)
+    base_mask = np.ones(T_arr.shape, dtype=bool)
+
+    if zenith_thr is not None:
+        dark_mask = Z_arr >= zenith_thr
+        bright_mask = Z_arr <= (90 - zenith_thr)
+        states[dark_mask] = "dark"
+        states[bright_mask] = "bright"
+        base_mask = ~(dark_mask | bright_mask)
+
+    if base_mask.any():
+        states[base_mask] = get_material_state(
+            T_arr[base_mask],
+            GHI_arr[base_mask],
+            prof,
         )
-        states.append(props["state"])
-        epsilons.append(props["emissivity"])
-        alphas.append(props["alpha"])
+
+    vec_eps = np.vectorize(lambda s: emissivity_profile.get(s, emissivity_profile.get("default", 0.90)))
+    vec_alpha = np.vectorize(lambda s: alpha_profile.get(s, alpha_profile.get("default", 0.90)))
+    epsilons = vec_eps(states)
+    alphas = vec_alpha(states)
 
     return pd.DataFrame({
-        "state": states,
-        "emissivity": epsilons,
-        "alpha": alphas
+        "state": states.ravel(),
+        "emissivity": epsilons.ravel(),
+        "alpha": alphas.ravel(),
     })
 
 
