@@ -22,7 +22,6 @@ from xgboost import XGBRegressor
 import logging
 from pv_profiles import pv_profiles as default_pv_profiles
 import argparse
-from utils.feature_utils import convert_xarray_to_dataframe
 from utils.feature_utils import (
     compute_band_ratios,
     filter_valid_columns,
