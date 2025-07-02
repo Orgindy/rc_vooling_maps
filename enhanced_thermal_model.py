@@ -10,6 +10,7 @@ from pv_profiles import RC_MATERIALS
 import xarray as xr
 import numpy as np
 from pv_profiles import PV_CONSTANTS
+from constants import ATMOSPHERIC_CONSTANTS
 
 # Optional: config connection
 try:
@@ -18,7 +19,7 @@ except ImportError:
     get_config = None  # fallback if you want to run standalone
 
 # Stefan–Boltzmann constant
-SIGMA = 5.670374419e-8  # W/m²·K⁴
+SIGMA_SB = ATMOSPHERIC_CONSTANTS["sigma_sb"]
 SELECTED_MATERIAL = "Smart_Coating"
 material_config = RC_MATERIALS[SELECTED_MATERIAL]
 
@@ -102,14 +103,14 @@ def solve_surface_temperature_scalar(
     """
     Scalar version for one point in time.
     """
-    T_sky = (IR_down / (epsilon * SIGMA)) ** 0.25
+    T_sky = (IR_down / (epsilon * SIGMA_SB)) ** 0.25
 
     def energy_balance(T_surface):
         Q_solar = alpha * GHI
         h = h_conv_base + h_conv_wind_coeff * wind_speed
         Q_conv = h * (T_surface - T_air)
-        Q_emit = epsilon * SIGMA * T_surface**4
-        Q_absorb = epsilon * SIGMA * T_sky**4
+        Q_emit = epsilon * SIGMA_SB * T_surface**4
+        Q_absorb = epsilon * SIGMA_SB * T_sky**4
         Q_rad = Q_emit - Q_absorb
         return Q_solar - Q_conv - Q_rad
 

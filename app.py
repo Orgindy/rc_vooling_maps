@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 import argparse
 import os
+from constants import ATMOSPHERIC_CONSTANTS
 try:
     from config import get_path
 except Exception as exc:
@@ -16,6 +17,9 @@ import io
 import zipfile
 import warnings
 warnings.filterwarnings('ignore')
+
+# Physical constant
+SIGMA_SB = ATMOSPHERIC_CONSTANTS["sigma_sb"]
 
 
 def parse_args():
@@ -90,7 +94,7 @@ def compute_temperature_series(ghi, tair, ir_down, wind, zenith, material_config
     Q_solar = alpha * ghi * cos_zenith
     
     # Radiative cooling to sky (simplified)
-    sigma = 5.67e-8  # Stefan-Boltzmann constant
+    sigma = SIGMA_SB  # Stefan-Boltzmann constant
     # Estimate effective sky temperature from downwelling IR
     T_sky = (ir_down / (epsilon * sigma)) ** 0.25
     

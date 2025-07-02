@@ -33,6 +33,7 @@ import xarray as xr
 import sys
 from concurrent.futures import ProcessPoolExecutor, as_completed
 import traceback
+from constants import ATMOSPHERIC_CONSTANTS
 
 
 # ------------------ Logging Setup ------------------
@@ -46,7 +47,7 @@ logger = logging.getLogger('smarts_era5_generator')
 # ------------------ SMARTS Constants ------------------
 DEFAULT_COMMENT = "ERA5_SMARTS_input"
 DEFAULT_CO2 = 420.0        # ppmv
-DEFAULT_SOLAR_CONSTANT = 1361.0  # W/m²
+DEFAULT_SOLAR_CONSTANT = ATMOSPHERIC_CONSTANTS['solar_constant']  # W/m²
 
 # ------------------ Reference Atmosphere Models ------------------
 # Define available reference atmosphere models in SMARTS
