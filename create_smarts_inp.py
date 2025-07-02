@@ -1785,7 +1785,7 @@ def main():
         try:
             locations_df = pd.read_csv(args.locations)
             locations = []
-            for _, row in locations_df.iterrows():
+            for row in locations_df.to_dict("records"):
                 try:
                     name = row['name']
                     lat = float(row['lat'])
@@ -1810,7 +1810,7 @@ def main():
             locations_df = read_table(args.db_table, db_url=args.db_url)
             locations = [
                 [row['name'], row['lat'], row['lon'], row.get('elevation'), row.get('land_cover', 'LIGHT_SOIL')]
-                for _, row in locations_df.iterrows()
+                for row in locations_df.to_dict("records")
             ]
             logger.info(f"Loaded {len(locations)} locations from table {args.db_table}")
         except Exception as e:

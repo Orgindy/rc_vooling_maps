@@ -18,12 +18,8 @@ def load_pv_technology_profiles(csv_path: Union[str, Path]) -> dict:
     """Load PV technology profiles from CSV file."""
 
     df = pd.read_csv(csv_path)
-    profiles = {}
-    for _, row in df.iterrows():
-        tech = row.get("Technology")
-        if not tech:
-            continue
-        profiles[tech] = {
+    profiles = {
+        row["Technology"]: {
             "temperature_coefficient": row.get("Temperature_Coefficient", -0.004),
             "stc_efficiency": row.get("STC_Efficiency", 0.2),
             "reference_red_fraction": row.get(
@@ -31,6 +27,9 @@ def load_pv_technology_profiles(csv_path: Union[str, Path]) -> dict:
                 PV_CONSTANTS.get("Reference_Red_Fraction", 0.42),
             ),
         }
+        for row in df.to_dict("records")
+        if row.get("Technology")
+    }
 
     return profiles
 
