@@ -7,13 +7,15 @@ from sklearn_extra.cluster import KMedoids
 import matplotlib.pyplot as plt
 import geopandas as gpd
 import contextily as ctx
-from scipy.constants import sigma as σ
+from constants import ATMOSPHERIC_CONSTANTS
 import joblib
 import os
 from sklearn.metrics import silhouette_score
 from config import get_path
 import xarray as xr
 import rasterio
+
+σ = ATMOSPHERIC_CONSTANTS['sigma_sb']
 
 from utils.sky_temperature import calculate_sky_temperature_improved
 

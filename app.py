@@ -16,6 +16,7 @@ import io
 import zipfile
 import warnings
 warnings.filterwarnings('ignore')
+from constants import ATMOSPHERIC_CONSTANTS
 
 
 def parse_args():
@@ -90,7 +91,7 @@ def compute_temperature_series(ghi, tair, ir_down, wind, zenith, material_config
     Q_solar = alpha * ghi * cos_zenith
     
     # Radiative cooling to sky (simplified)
-    sigma = 5.67e-8  # Stefan-Boltzmann constant
+    sigma = ATMOSPHERIC_CONSTANTS['sigma_sb']
     # Estimate effective sky temperature from downwelling IR
     T_sky = (ir_down / (epsilon * sigma)) ** 0.25
     
